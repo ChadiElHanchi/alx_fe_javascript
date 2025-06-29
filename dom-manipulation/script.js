@@ -118,9 +118,9 @@ function addQuote() {
     return;
   }
 
-  // New quotes get IDs starting at 1001 to mark as unsynced
-  const maxId = quotes.length ? Math.max(...quotes.map(q => q.id)) : 1000;
-  const newId = maxId >= 1000 ? maxId + 1 : 1001;
+  // Assign new IDs >= 1000 to mark new quotes for syncing
+  const maxId = quotes.length ? Math.max(...quotes.map(q => q.id)) : 999;
+  const newId = maxId >= 1000 ? maxId + 1 : 1000;
 
   const newQuote = { id: newId, text, category };
   quotes.push(newQuote);
@@ -139,8 +139,8 @@ function addQuote() {
 
 async function syncQuotes() {
   try {
-    // POST all local quotes with id > 1000 (unsynced)
-    const newQuotes = quotes.filter(q => q.id > 1000);
+    // POST all new local quotes with id >= 1000
+    const newQuotes = quotes.filter(q => q.id >= 1000);
     for (const quote of newQuotes) {
       await fetch("https://jsonplaceholder.typicode.com/posts", {
         method: "POST",
@@ -149,7 +149,7 @@ async function syncQuotes() {
           title: quote.text,
           body: quote.category,
           userId: 1
-        })
+        }),
       });
     }
 
@@ -167,13 +167,12 @@ async function syncQuotes() {
 
     syncStatus.textContent = "Sync completed successfully.";
     syncStatus.style.color = "green";
-    setTimeout(() => syncStatus.textContent = "", 3000);
-
+    setTimeout(() => (syncStatus.textContent = ""), 3000);
   } catch (error) {
     console.error("Sync failed:", error);
     syncStatus.textContent = "Sync failed.";
     syncStatus.style.color = "red";
-    setTimeout(() => syncStatus.textContent = "", 3000);
+    setTimeout(() => (syncStatus.textContent = ""), 3000);
   }
 }
 
@@ -191,7 +190,7 @@ function resolveConflicts(serverData) {
     populateCategories();
     syncStatus.textContent = `Server sync: Added ${newItems} new quotes.`;
     syncStatus.style.color = "green";
-    setTimeout(() => syncStatus.textContent = "", 3000);
+    setTimeout(() => (syncStatus.textContent = ""), 3000);
   }
 }
 
