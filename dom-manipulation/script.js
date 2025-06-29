@@ -118,9 +118,7 @@ function addQuote() {
     return;
   }
 
-  // New quotes get IDs starting at 1001 to mark as unsynced
-  const maxId = quotes.length ? Math.max(...quotes.map(q => q.id)) : 1000;
-  const newId = maxId >= 1000 ? maxId + 1 : 1001;
+  const newId = quotes.length ? Math.max(...quotes.map(q => q.id)) + 1 : 1;
 
   const newQuote = { id: newId, text, category };
   quotes.push(newQuote);
@@ -131,66 +129,35 @@ function addQuote() {
   newQuoteCategory.value = "";
 
   alert("Quote added!");
+
+  syncQuoteToServer(newQuote);
 }
 
-// ---------------------
-// Sync all local new quotes & fetch server quotes
-// ---------------------
-
-async function syncQuotes() {
+async function syncQuoteToServer(quote) {
   try {
-    // POST all local quotes with id > 1000 (unsynced)
-    const newQuotes = quotes.filter(q => q.id > 1000);
-    for (const quote of newQuotes) {
-      await fetch("https://jsonplaceholder.typicode.com/posts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: quote.text,
-          body: quote.category,
-          userId: 1
-        })
-      });
-    }
+    const response = await fetch("https://jsonplaceholder.typicode.com/posts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        title: quote.text,
+        body: quote.category,
+        userId: 1
+      })
+    });
 
-    // GET latest quotes from server
-    const response = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=5");
-    const serverQuotes = await response.json();
+    const result = await response.json();
+    console.log("Server responded to POST:", result);
 
-    const serverMapped = serverQuotes.map(post => ({
-      id: post.id,
-      text: post.title,
-      category: "Server"
-    }));
-
-    resolveConflicts(serverMapped);
-
-    syncStatus.textContent = "Sync completed successfully.";
-    syncStatus.style.color = "green";
+    syncStatus.textContent = "Quote synced to server!";
+    syncStatus.style.color = "blue";
     setTimeout(() => syncStatus.textContent = "", 3000);
 
-  } catch (error) {
-    console.error("Sync failed:", error);
-    syncStatus.textContent = "Sync failed.";
+  } catch (err) {
+    console.error("POST failed:", err);
+    syncStatus.textContent = "Failed to sync quote to server.";
     syncStatus.style.color = "red";
-    setTimeout(() => syncStatus.textContent = "", 3000);
-  }
-}
-
-function resolveConflicts(serverData) {
-  let newItems = 0;
-  serverData.forEach(serverQuote => {
-    if (!quotes.find(localQuote => localQuote.id === serverQuote.id)) {
-      quotes.push(serverQuote);
-      newItems++;
-    }
-  });
-
-  if (newItems > 0) {
-    saveQuotes();
-    populateCategories();
-    syncStatus.textContent = `Server sync: Added ${newItems} new quotes.`;
-    syncStatus.style.color = "green";
     setTimeout(() => syncStatus.textContent = "", 3000);
   }
 }
@@ -249,6 +216,52 @@ function importFromJsonFile(event) {
 }
 
 // ---------------------
+// Server Simulation & Sync
+// ---------------------
+
+async function fetchQuotesFromServer() {
+  try {
+    const response = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=5");
+    const serverQuotes = await response.json();
+
+    const serverMapped = serverQuotes.map(post => ({
+      id: post.id,
+      text: post.title,
+      category: "Server"
+    }));
+
+    resolveConflicts(serverMapped);
+  } catch (err) {
+    console.error("Failed to fetch from server:", err);
+    syncStatus.textContent = "Server sync failed.";
+    syncStatus.style.color = "red";
+    setTimeout(() => syncStatus.textContent = "", 3000);
+  }
+}
+
+function resolveConflicts(serverData) {
+  let newItems = 0;
+  serverData.forEach(serverQuote => {
+    if (!quotes.find(localQuote => localQuote.id === serverQuote.id)) {
+      quotes.push(serverQuote);
+      newItems++;
+    }
+  });
+
+  if (newItems > 0) {
+    saveQuotes();
+    populateCategories();
+    syncStatus.textContent = `Server sync: Added ${newItems} new quotes.`;
+    syncStatus.style.color = "green";
+    setTimeout(() => syncStatus.textContent = "", 3000);
+  } else {
+    syncStatus.textContent = "Server sync: No new updates.";
+    syncStatus.style.color = "gray";
+    setTimeout(() => syncStatus.textContent = "", 2000);
+  }
+}
+
+// ---------------------
 // Events & Init
 // ---------------------
 
@@ -265,5 +278,4 @@ if (lastQuote) {
   quoteDisplay.textContent = `Last viewed quote: "${lastQuote}"`;
 }
 
-// Sync every 15 seconds
-setInterval(syncQuotes, 15000);
+setInterval(fetchQuotesFromServer, 15000);
