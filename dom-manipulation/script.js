@@ -22,11 +22,11 @@ const filteredQuotes = document.getElementById("filteredQuotes");
 const newQuoteBtn = document.getElementById("newQuote");
 const categorySelect = document.getElementById("categorySelect");
 const categoryFilter = document.getElementById("categoryFilter");
-const addQuoteBtn = document.getElementById("addQuoteBtn");
-const newQuoteText = document.getElementById("newQuoteText");
-const newQuoteCategory = document.getElementById("newQuoteCategory");
 const exportBtn = document.getElementById("exportBtn");
 const importFile = document.getElementById("importFile");
+
+let newQuoteText;
+let newQuoteCategory;
 
 // ---------------------
 // Functions
@@ -39,7 +39,6 @@ function saveQuotes() {
 function populateCategories() {
   const categories = [...new Set(quotes.map(q => q.category))];
 
-  // Populate random quote selector
   categorySelect.innerHTML = "";
   categories.forEach(category => {
     const option = document.createElement("option");
@@ -48,7 +47,6 @@ function populateCategories() {
     categorySelect.appendChild(option);
   });
 
-  // Populate filter dropdown
   categoryFilter.innerHTML = "";
   const allOption = document.createElement("option");
   allOption.value = "all";
@@ -62,7 +60,6 @@ function populateCategories() {
     categoryFilter.appendChild(option);
   });
 
-  // Restore last selected filter
   const savedFilter = localStorage.getItem("selectedFilter");
   if (savedFilter) {
     categoryFilter.value = savedFilter;
@@ -83,6 +80,33 @@ function showRandomQuote() {
   quoteDisplay.textContent = randomQuote;
 
   sessionStorage.setItem("lastQuote", randomQuote);
+}
+
+function createAddQuoteForm() {
+  const container = document.getElementById("addQuoteContainer");
+
+  const inputQuote = document.createElement("input");
+  inputQuote.id = "newQuoteText";
+  inputQuote.type = "text";
+  inputQuote.placeholder = "Enter a new quote";
+
+  const inputCategory = document.createElement("input");
+  inputCategory.id = "newQuoteCategory";
+  inputCategory.type = "text";
+  inputCategory.placeholder = "Enter quote category";
+
+  const button = document.createElement("button");
+  button.textContent = "Add Quote";
+  button.addEventListener("click", addQuote);
+
+  container.appendChild(inputQuote);
+  container.appendChild(document.createElement("br"));
+  container.appendChild(inputCategory);
+  container.appendChild(document.createElement("br"));
+  container.appendChild(button);
+
+  newQuoteText = inputQuote;
+  newQuoteCategory = inputCategory;
 }
 
 function addQuote() {
@@ -210,11 +234,11 @@ function resolveConflicts(serverData) {
 // ---------------------
 
 newQuoteBtn.addEventListener("click", showRandomQuote);
-addQuoteBtn.addEventListener("click", addQuote);
 exportBtn.addEventListener("click", exportQuotes);
 importFile.addEventListener("change", importFromJsonFile);
 categoryFilter.addEventListener("change", filterQuotes);
 
+createAddQuoteForm();
 populateCategories();
 
 const lastQuote = sessionStorage.getItem("lastQuote");
@@ -222,5 +246,4 @@ if (lastQuote) {
   quoteDisplay.textContent = `Last viewed quote: "${lastQuote}"`;
 }
 
-// ✅ Periodic server sync every 15 seconds
 setInterval(fetchQuotesFromServer, 15000);
