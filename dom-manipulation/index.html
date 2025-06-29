@@ -1,7 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dynamic Quote Generator</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    #quoteDisplay, #filteredQuotes { margin: 20px 0; font-size: 1.1em; }
+    .form-group { margin: 10px 0; }
+    #syncStatus { margin: 10px 0; }
+  </style>
+</head>
 <body>
   <h1>Dynamic Quote Generator</h1>
 
-  <div id="syncStatus" style="color: green; margin-bottom: 10px;"></div>
+  <div id="syncStatus"></div>
 
   <label for="categoryFilter">Filter by Category:</label>
   <select id="categoryFilter"></select>
@@ -30,3 +43,4 @@
 
   <script src="script.js"></script>
 </body>
+</html>

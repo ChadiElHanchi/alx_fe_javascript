@@ -39,6 +39,7 @@ function saveQuotes() {
 function populateCategories() {
   const categories = [...new Set(quotes.map(q => q.category))];
 
+  // Populate random quote selector
   categorySelect.innerHTML = "";
   categories.forEach(category => {
     const option = document.createElement("option");
@@ -47,6 +48,7 @@ function populateCategories() {
     categorySelect.appendChild(option);
   });
 
+  // Populate filter dropdown
   categoryFilter.innerHTML = "";
   const allOption = document.createElement("option");
   allOption.value = "all";
@@ -60,6 +62,7 @@ function populateCategories() {
     categoryFilter.appendChild(option);
   });
 
+  // Restore last selected filter
   const savedFilter = localStorage.getItem("selectedFilter");
   if (savedFilter) {
     categoryFilter.value = savedFilter;
@@ -160,19 +163,24 @@ function importFromJsonFile(event) {
 // Server Simulation & Sync
 // ---------------------
 
-async function fetchServerQuotes() {
-  // ✅ Using JSONPlaceholder posts as mock
-  const response = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=5");
-  const serverQuotes = await response.json();
+async function fetchQuotesFromServer() {
+  try {
+    const response = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=5");
+    const serverQuotes = await response.json();
 
-  // Map to same structure
-  const serverMapped = serverQuotes.map(post => ({
-    id: post.id,
-    text: post.title,
-    category: "Server"
-  }));
+    const serverMapped = serverQuotes.map(post => ({
+      id: post.id,
+      text: post.title,
+      category: "Server"
+    }));
 
-  resolveConflicts(serverMapped);
+    resolveConflicts(serverMapped);
+  } catch (err) {
+    console.error("Failed to fetch from server:", err);
+    syncStatus.textContent = "Server sync failed.";
+    syncStatus.style.color = "red";
+    setTimeout(() => syncStatus.textContent = "", 3000);
+  }
 }
 
 function resolveConflicts(serverData) {
@@ -214,5 +222,5 @@ if (lastQuote) {
   quoteDisplay.textContent = `Last viewed quote: "${lastQuote}"`;
 }
 
-// ✅ Periodically fetch every 15s
-setInterval(fetchServerQuotes, 15000);
+// ✅ Periodic server sync every 15 seconds
+setInterval(fetchQuotesFromServer, 15000);
