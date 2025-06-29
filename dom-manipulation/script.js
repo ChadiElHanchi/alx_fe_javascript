@@ -120,7 +120,8 @@ function addQuote() {
 
   const newId = quotes.length ? Math.max(...quotes.map(q => q.id)) + 1 : 1;
 
-  quotes.push({ id: newId, text, category });
+  const newQuote = { id: newId, text, category };
+  quotes.push(newQuote);
   saveQuotes();
   populateCategories();
 
@@ -128,6 +129,37 @@ function addQuote() {
   newQuoteCategory.value = "";
 
   alert("Quote added!");
+
+  syncQuoteToServer(newQuote);
+}
+
+async function syncQuoteToServer(quote) {
+  try {
+    const response = await fetch("https://jsonplaceholder.typicode.com/posts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        title: quote.text,
+        body: quote.category,
+        userId: 1
+      })
+    });
+
+    const result = await response.json();
+    console.log("Server responded to POST:", result);
+
+    syncStatus.textContent = "Quote synced to server!";
+    syncStatus.style.color = "blue";
+    setTimeout(() => syncStatus.textContent = "", 3000);
+
+  } catch (err) {
+    console.error("POST failed:", err);
+    syncStatus.textContent = "Failed to sync quote to server.";
+    syncStatus.style.color = "red";
+    setTimeout(() => syncStatus.textContent = "", 3000);
+  }
 }
 
 function filterQuotes() {
